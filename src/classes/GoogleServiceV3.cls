@@ -4,61 +4,53 @@ public class GoogleServiceV3 {
 	public static final String JWT_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer';
 	public static final String JWT_ENDPOINT = 'https://accounts.google.com/o/oauth2/token';
 	
-	public static final Integer AUTH = 1;
-	public static final Integer BAD_AUTH = 2;
-	public static final Integer NOT_VERIFIED = 3;
-	public static final Integer TERMS_NOT_AGREED = 4;
-	public static final Integer CAPTCHA_REQUIRED = 5;
-	public static final Integer UNKNOWN = 6;
-	public static final Integer ACCOUNT_DELETED = 7;
-	public static final Integer ACCOUNT_EXPIRED = 8;
-	public static final Integer SERVICE_DISABLED = 9;
-	public static final Integer SERVICE_UNAVAILABLE = 10;
-	public static final Integer NO_MATCH = 99;
+	private SignServer signServer;
+	private Blob privateKey;
 	
-	private String serviceName;
+	private AuthResponse auth = null;
 	
-	private Boolean useClientLoginAuthentication = false;
-	private String clientLoginToken = null;
+	public GoogleServiceV3(SignServer signServer) {
+		this.signServer = signServer;
+	}
 	
-	private Boolean useApiKey = false;
-	private String apiKey = null;
-	
-	public GoogleServiceV3(String serviceName ) {
-		this.serviceName = serviceName;
-	} 
+	public GoogleServiceV3(Blob privateKey) {
+		this.privateKey = privateKey;
+	}
 	
 	public String getServiceName() { return this.serviceName;}
 	
-	public Boolean authenticateWithClientLogin(String username, String passwd, String service) {
-		this.useClientLoginAuthentication = false;
-		this.clientLoginToken = null;
-		
+	public Boolean authenticate(JWT jwt) {
+		if (jwt.aud == null) {
+			jwt.aud = JWT_AUD;
+		}
+		if (jwt.iat == null) {
+			jwt.iat = Datetime.now();
+		}
+		if (jwt.exp == null) {
+			jwt.exp = jwt.iat.addHours(1);
+		}
+		String str = jwt.getEncodedString();
+		if (this.signServer != null) {
+			str += '.' + sginServer.sign(str);
+		} else if (this.privateKey != null) {
+			str += '.' + jwt.sign(privateKey);
+		} else {
+			throw new GoogleServiceException('Can not sign to jwt");
+		}
 		HttpRequest req = createRequest();
-		String content = 'accountType=HOSTED_OR_GOOGLE&Email='+username+'&Passwd='+passwd+'&service='+service;
-		req.setEndpoint('https://www.google.com/accounts/ClientLogin');
+		String content = 'grant_typ=' + EnccodingUtil.urlEncode(JWT_GRANT_TYPE) +
+			'&assertion=' + EncodingUtil.urlEncode(str);
+		req.setEndpoint(JWT_ENDPOINT);
 		req.setHeader('Content-Type','application/x-www-form-urlencoded');
 		req.setMethod('POST');
 		req.setBody(content);
 		
 		HttpResponse res = sendRequest(req);
 		if (res.getStatusCode() == 200) {
-			if(this.getClientLoginResponseCode(res.getBody()) == AUTH) {
-				this.useClientLoginAuthentication = true;
-				clientLoginToken = res.getBody().substring(res.getBody().indexOf('Auth=')+5).trim();
-				System.debug('Client Login Authentication successful');
-				return  true;
-			} else {
-				System.debug('Client Login Authentication failed. Body was: ' + res.getBody());
-				return false;
-			}
+			this.auth = (AuthResponse)JSON.deserialize(res.getBody(), AuthResponse.class);
+			return  true;
 		}
 		throw buildResponseException(res);
-	}
-	
-	public void setApiKey(String key) {
-		this.apiKey = key;
-		this.useApiKey = true;
 	}
 	
 	public String get(String url) {
@@ -84,31 +76,11 @@ public class GoogleServiceV3 {
 		throw buildResponseException(res);
 	}
 	
-	private Integer getClientLoginResponseCode(String response)
-	{
-		if(response.contains('Auth=')) return AUTH;
-		if(response.contains('BadAuthentication=')) return BAD_AUTH;
-		if(response.contains('NotVerified=')) return NOT_VERIFIED;
-		if(response.contains('TermsNotAgreed=')) return TERMS_NOT_AGREED;
-		if(response.contains('CaptchaRequired=')) return CAPTCHA_REQUIRED;
-		if(response.contains('Unknown=')) return UNKNOWN;
-		if(response.contains('AccountDeleted=')) return ACCOUNT_DELETED;
-		if(response.contains('AccountDisabled=')) return ACCOUNT_EXPIRED;
-		if(response.contains('ServiceDisabled=')) return SERVICE_DISABLED;
-		if(response.contains('ServiceUnavailable=')) return SERVICE_UNAVAILABLE;
-		
-		return NO_MATCH;
-	}
-	
 	private HttpRequest createRequest() {
 		HttpRequest req = new HttpRequest();
 		req.setHeader('User-Agent','apex-google-api');
-		if(this.useClientLoginAuthentication) {
-			req.setHeader('Authorization','GoogleLogin auth=' + this.clientLoginToken);
-		}
-		if (this.useApiKey) {
-			req.setHeader('Authorization', 'Bearer ' + this.apiKey);
-			System.debug(req.getHeader('Authorization'));
+		if(this.auth != null) {
+			req.setHeader('Authorization', this.auth.token_type + ' ' + this.auth.access_token);
 		}
 		return req;
 	}
@@ -129,6 +101,13 @@ public class GoogleServiceV3 {
 		String msg = 'STATUS: ' + res.getStatus() + 
 			'\nSTATUS_CODE: ' + res.getStatusCode() +
 			'\nBODY: ' + res.getBody();
+		System.debug(msg);
 		return new GoogleServiceException(msg);
+	}
+	
+	private class AuthResponse {
+		public String access_token;
+		public String token_type;
+		public Integer expire_in;
 	}
 }

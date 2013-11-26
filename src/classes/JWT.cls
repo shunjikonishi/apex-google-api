@@ -3,9 +3,21 @@ public class JWT {
 	private Header header = new Header();
 	private ClaimSet claimSet = new ClaimSet();
 	
+	public JWT() {
+	}
+	
+	public JWT(String iss) {
+		this.iss = iss;
+	}
+	
 	public String iss {
 		get { return this.claimSet.iss;}
 		set { this.claimSet.iss = value;}
+	}
+	
+	public String scope {
+		get { return this.claimSet.scope;}
+		set { this.claimSet.scope = value;}
 	}
 	
 	public void addScope(String v) {
@@ -42,7 +54,7 @@ public class JWT {
 	public String sign(Blob privateKey) {
 		String input = getEncodedString();
 		Blob ret = Crypto.sign('RSA', Blob.valueOf(input), privateKey);
-		return input + '.' + base64(ret);
+		return base64(ret);
 	}
 	
 	private static String base64(String str) {
@@ -66,7 +78,7 @@ public class JWT {
 		public Long iat;
 		
 		public override String toString() {
-		    String format = '"iss": "{0}", "scope": "{1}", "aud": "{2}", "exp": {3}, "iat": {4}';
+		    String format = '"iss":"{0}","scope":"{1}","aud":"{2}","exp": {3},"iat": {4}';
 			List<String> input = new List<String>();
 			input.add(iss);
 			input.add(scope);

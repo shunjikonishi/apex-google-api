@@ -3,22 +3,27 @@ public class GoogleCalendarService {
 	public static final String SCOPE_READWRITE = 'https://www.googleapis.com/auth/calendar';
 	public static final String SCOPE_READONLY  = 'https://www.googleapis.com/auth/calendar.readonly';
 	
-	public static final string defaultFeed = 'https://www.google.com/calendar/feeds/default';
-	public static final string allCalendars = 'https://www.google.com/calendar/feeds/default/allcalendars/full';
-	public static final string ownCalendars = 'https://www.google.com/calendar/feeds/default/owncalendars/full';
+	public static final String CALENDAR_URL = 'https://www.googleapis.com/calendar/v3/users/me';
 	
-	private GoogleServiceV3 service = new GoogleServiceV3('Calendar');
+	private GoogleServiceV3 service;
 	
-	public Boolean useClientLogin(String username, String password) {
-		return service.authenticateWithClientLogin(username, password, 'cl');
+	public GoogleCalendarService(SignServer signServer) {
+		this.service = new GoogleServiceV3(signServer);
 	}
 	
-	public void setApiKey(String apiKey) {
-		service.setApiKey(apiKey);
+	public GoogleCalendarService(Blob privateKey) {
+		this.service = new GoogleServiceV3(privateKey);
 	}
-
+	
+	public Boolean authenticate(JWT jwt) {
+		if (jwt.scope == null) {
+			jwt.scope = SCOPE_READWRITE;
+		}
+		return service.authenticate(jwt);
+	}
+	
 	public String getAllCalendars() {
-		return service.get('https://www.googleapis.com/calendar/v3/users/me/calendarList');
+		return service.get(CALENDAR_URL + '/calendarList');
 	}
 	/*
 	public List<GoogleCalendar> getAllCalendars() {
