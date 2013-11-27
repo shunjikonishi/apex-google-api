@@ -3,10 +3,12 @@
     <types>
         <members>GoogleCalendar</members>
         <members>GoogleCalendarEvent</members>
+        <members>GoogleCalendarList</members>
         <members>GoogleCalendarService</members>
         <members>GoogleCalendarTest</members>
         <members>GoogleServiceException</members>
         <members>GoogleServiceV3</members>
+        <members>GoogleUser</members>
         <members>JWT</members>
         <members>SignServer</members>
         <name>ApexClass</name>

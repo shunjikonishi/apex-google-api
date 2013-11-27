@@ -34,12 +34,12 @@ public class JWT {
 	}
 	
 	public Datetime iat {
-		get { return this.claimSet.iat == 0 ? null : Datetime.newInstance(this.claimSet.iat * 1000);}
+		get { return this.claimSet.iat == null ? null : Datetime.newInstance(this.claimSet.iat * 1000);}
 		set { this.claimSet.iat = value.getTime() / 1000;}
 	}
 	
 	public Datetime exp {
-		get { return this.claimSet.exp == 0 ? null : Datetime.newInstance(this.claimSet.exp * 1000);}
+		get { return this.claimSet.exp == null ? null : Datetime.newInstance(this.claimSet.exp * 1000);}
 		set { this.claimSet.exp = value.getTime() / 1000;}
 	}
 	

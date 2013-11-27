@@ -17,8 +17,6 @@ public class GoogleServiceV3 {
 		this.privateKey = privateKey;
 	}
 	
-	public String getServiceName() { return this.serviceName;}
-	
 	public Boolean authenticate(JWT jwt) {
 		if (jwt.aud == null) {
 			jwt.aud = JWT_AUD;
@@ -31,22 +29,23 @@ public class GoogleServiceV3 {
 		}
 		String str = jwt.getEncodedString();
 		if (this.signServer != null) {
-			str += '.' + sginServer.sign(str);
+			str += '.' + signServer.sign(str);
 		} else if (this.privateKey != null) {
 			str += '.' + jwt.sign(privateKey);
 		} else {
-			throw new GoogleServiceException('Can not sign to jwt");
+			throw new GoogleServiceException('Can not sign to jwt');
 		}
+		System.debug('JWT:' + jwt);
 		HttpRequest req = createRequest();
-		String content = 'grant_typ=' + EnccodingUtil.urlEncode(JWT_GRANT_TYPE) +
-			'&assertion=' + EncodingUtil.urlEncode(str);
+		String content = 'grant_type=' + EncodingUtil.urlEncode(JWT_GRANT_TYPE, 'utf-8') +
+			'&assertion=' + EncodingUtil.urlEncode(str, 'utf-8');
 		req.setEndpoint(JWT_ENDPOINT);
 		req.setHeader('Content-Type','application/x-www-form-urlencoded');
 		req.setMethod('POST');
 		req.setBody(content);
 		
 		HttpResponse res = sendRequest(req);
-		if (res.getStatusCode() == 200) {
+		if (isOK(res)) {
 			this.auth = (AuthResponse)JSON.deserialize(res.getBody(), AuthResponse.class);
 			return  true;
 		}
@@ -70,17 +69,59 @@ public class GoogleServiceV3 {
 		req.setEndpoint(url);
 		req.setMethod('GET');
 		HttpResponse res = sendRequest(req);
-		if (res.getStatusCode() == 200) {
+		if (isOK(res)) {
 			return res.getBody();
 		}
 		throw buildResponseException(res);
+	}
+	
+	public String post(String url, String jsonStr) {
+		HttpRequest req = createRequest();
+		req.setEndpoint(url);
+		req.setMethod('POST');
+		req.setHeader('Content-Type','application/json');
+		req.setBody(jsonStr);
+		HttpResponse res = sendRequest(req);
+		if (isOK(res)) {
+			return res.getBody();
+		}
+		throw buildResponseException(res);
+	}
+	
+	public String put(String url, String jsonStr) {
+		HttpRequest req = createRequest();
+		req.setEndpoint(url);
+		req.setMethod('PUT');
+		req.setHeader('Content-Type','application/json');
+		req.setBody(jsonStr);
+		HttpResponse res = sendRequest(req);
+		if (isOK(res)) {
+			return res.getBody();
+		}
+		throw buildResponseException(res);
+	}
+	
+	public String doDelete(String url) {
+		HttpRequest req = createRequest();
+		req.setEndpoint(url);
+		req.setMethod('DELETE');
+		HttpResponse res = sendRequest(req);
+		if (isOK(res)) {
+			return res.getBody();
+		}
+		throw buildResponseException(res);
+	}
+	
+	private boolean isOK(HttpResponse res) {
+		return res.getStatusCode() >= 200 && res.getStatusCode() < 300;
 	}
 	
 	private HttpRequest createRequest() {
 		HttpRequest req = new HttpRequest();
 		req.setHeader('User-Agent','apex-google-api');
 		if(this.auth != null) {
-			req.setHeader('Authorization', this.auth.token_type + ' ' + this.auth.access_token);
+			String str = this.auth.token_type + ' ' + this.auth.access_token;
+			req.setHeader('Authorization', str);
 		}
 		return req;
 	}
