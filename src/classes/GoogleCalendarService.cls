@@ -95,12 +95,26 @@ public class GoogleCalendarService {
 		service.doDelete(url);
 	}
 	
+	public EventListResponse listEvent(GoogleCalendar cal) {
+		EventListOption option = new EventListOption();
+		option.timeMin = Datetime.now().addYears(-1);
+		return listEvent(cal, option);
+	}
+	
 	public EventListResponse listEvent(GoogleCalendar cal, EventListOption option) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events' + option.toQuery();
 		String str = service.get(url);
 		str = GoogleCalendarEvent.replaceJson(str);
 		System.debug('listEvent: ' + str);
 		return (EventListResponse)JSON.deserializeStrict(str, EventListResponse.class); 
+	}
+	
+	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent event) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events';
+		String str = service.post(url, event.toString());
+		str = GoogleCalendarEvent.replaceJson(str);
+		System.debug('insertEvent: ' + str);
+		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
 	}
 
 	public class CalendarListOption {

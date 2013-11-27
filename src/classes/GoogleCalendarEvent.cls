@@ -105,6 +105,7 @@ public class GoogleCalendarEvent {
 		ret = ret.replaceAll('"private_xx":', '"private":');
 		ret = removeField(ret, 'startDate');
 		ret = removeField(ret, 'endDate');
+		ret = removeNull(ret);
 		return ret;
 	}
 	
@@ -127,6 +128,10 @@ public class GoogleCalendarEvent {
 			return str;
 		}
 		return str.substring(0, n) + str.substring(n2+1);
+	}
+	
+	private String removeNull(String ret) {
+		return ret;
 	}
 	
 	public class ExtendedProperties {
