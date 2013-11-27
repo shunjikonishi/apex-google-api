@@ -10,29 +10,35 @@ https://developers.google.com/google-apps/calendar/v3/reference/
 ### Implemented
 
 - CalendarList
+
     list
     get
 - Calendars
+
     delete
     get
     insert
     update
 - Events
+
     list
 
 ### Not implemented
 
 - Acl
 - CalendarList
+
     delete
     insert
     patch
     update
 - Calendars
+
     clear
     patch
 - Colors
 - Events
+
     delete
     get
     import
