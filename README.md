@@ -28,10 +28,10 @@ https://developers.google.com/google-apps/calendar/v3/reference/
 - Acl
 - CalendarList
 
-    delete
-    insert
-    patch
-    update
+    - delete
+    - insert
+    - patch
+    - update
 - Calendars
 
     clear
