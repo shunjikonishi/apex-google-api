@@ -3,6 +3,7 @@
     <types>
         <members>AbstractJsonObject</members>
         <members>GoogleCalendar</members>
+        <members>GoogleCalendarAcl</members>
         <members>GoogleCalendarEvent</members>
         <members>GoogleCalendarList</members>
         <members>GoogleCalendarService</members>

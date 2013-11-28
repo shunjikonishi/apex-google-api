@@ -5,16 +5,14 @@ public class GoogleServiceV3 {
 	public static final String JWT_ENDPOINT = 'https://accounts.google.com/o/oauth2/token';
 	
 	private SignServer signServer;
-	private Blob privateKey;
 	
 	private AuthResponse auth = null;
 	
-	public GoogleServiceV3(SignServer signServer) {
-		this.signServer = signServer;
+	public GoogleServiceV3() {
 	}
 	
-	public GoogleServiceV3(Blob privateKey) {
-		this.privateKey = privateKey;
+	public GoogleServiceV3(SignServer signServer) {
+		this.signServer = signServer;
 	}
 	
 	public Boolean authenticate(JWT jwt) {
@@ -30,8 +28,6 @@ public class GoogleServiceV3 {
 		String str = jwt.getEncodedString();
 		if (this.signServer != null) {
 			str += '.' + signServer.sign(str);
-		} else if (this.privateKey != null) {
-			str += '.' + jwt.sign(privateKey);
 		} else {
 			throw new GoogleServiceException('Can not sign to jwt');
 		}
@@ -50,6 +46,12 @@ public class GoogleServiceV3 {
 			return  true;
 		}
 		throw buildResponseException(res);
+	}
+	
+	public void setAccessToken(String tokenType, String token) {
+		this.auth = new AuthResponse();
+		this.auth.token_type = tokenType;
+		this.auth.access_token = token;
 	}
 	
 	public String get(String url) {

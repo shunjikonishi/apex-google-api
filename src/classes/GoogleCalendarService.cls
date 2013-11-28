@@ -7,12 +7,12 @@ public class GoogleCalendarService {
 	
 	private GoogleServiceV3 service;
 	
-	public GoogleCalendarService(SignServer signServer) {
-		this.service = new GoogleServiceV3(signServer);
+	public GoogleCalendarService() {
+		this.service = new GoogleServiceV3();
 	}
 	
-	public GoogleCalendarService(Blob privateKey) {
-		this.service = new GoogleServiceV3(privateKey);
+	public GoogleCalendarService(SignServer signServer) {
+		this.service = new GoogleServiceV3(signServer);
 	}
 	
 	public Boolean authenticate(JWT jwt) {
@@ -22,6 +22,13 @@ public class GoogleCalendarService {
 		return service.authenticate(jwt);
 	}
 	
+	public void setAccessToken(String tokenType, String token) {
+		this.service.setAccessToken(tokenType, token);
+	}
+	
+	////////////////////////////////////////////////
+	// CalendarList
+	////////////////////////////////////////////////
 	public ListCalendarListResponse listCalendarList() {
 		return listCalendarList(null);
 	}	
@@ -43,6 +50,9 @@ public class GoogleCalendarService {
 		return (GoogleCalendarList)JSON.deserializeStrict(str, GoogleCalendarList.class); 
 	}
 
+	////////////////////////////////////////////////
+	// Calendar
+	////////////////////////////////////////////////
 	public GoogleCalendar getCalendar(String id) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(id, 'utf-8');
 		String str = service.get(url);
@@ -87,6 +97,9 @@ public class GoogleCalendarService {
 		service.doDelete(url);
 	}
 	
+	////////////////////////////////////////////////
+	// Event
+	////////////////////////////////////////////////
 	public ListEventResponse listEvent(GoogleCalendar cal) {
 		ListEventOption option = new ListEventOption();
 		option.timeMin = Datetime.now().addYears(-1);
@@ -161,6 +174,52 @@ public class GoogleCalendarService {
 		service.doDelete(url);
 	}
 	
+	////////////////////////////////////////////////
+	// ACL
+	////////////////////////////////////////////////
+	public void deleteAcl(GoogleCalendar cal, String ruleId) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl/' + EncodingUtil.urlEncode(ruleId, 'utf-8');
+		service.doDelete(url);
+	}
+	
+	public GoogleCalendarAcl getAcl(GoogleCalendar cal, String ruleId) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl/' + EncodingUtil.urlEncode(ruleId, 'utf-8');
+		String str = service.get(url);
+		System.debug('getAcl: ' + str);
+		return (GoogleCalendarAcl)JSON.deserializeStrict(str, GoogleCalendarAcl.class); 
+	}
+	
+	public GoogleCalendarAcl insertAcl(GoogleCalendar cal, GoogleCalendarAcl acl) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl';
+		String str = service.post(url, acl.toString());
+		System.debug('insertAcl: ' + str);
+		return (GoogleCalendarAcl)JSON.deserializeStrict(str, GoogleCalendarAcl.class); 
+	}
+	
+	public ListAclResponse listAcl(GoogleCalendar cal) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl';
+		String str = service.get(url);
+		System.debug('listAcl: ' + str);
+		return (ListAclResponse)JSON.deserializeStrict(str, ListAclResponse.class); 
+	}
+	
+	public GoogleCalendarAcl patchAcl(GoogleCalendar cal, String ruleId, GoogleCalendarAcl acl) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl/' + EncodingUtil.urlEncode(ruleId, 'utf-8');
+		String str = service.patch(url, acl.toString());
+		System.debug('patchAcl: ' + str);
+		return (GoogleCalendarAcl)JSON.deserializeStrict(str, GoogleCalendarAcl.class); 
+	}
+	
+	public GoogleCalendarAcl updateAcl(GoogleCalendar cal, GoogleCalendarAcl acl) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/acl/' + EncodingUtil.urlEncode(acl.id, 'utf-8');
+		String str = service.put(url, acl.toString());
+		System.debug('patchAcl: ' + str);
+		return (GoogleCalendarAcl)JSON.deserializeStrict(str, GoogleCalendarAcl.class); 
+	}
+	
+	////////////////////////////////////////////////
+	// Inner class
+	////////////////////////////////////////////////
 	public class ListCalendarListOption {
 		
 		public ListCalendarListOption() {
@@ -301,5 +360,12 @@ public class GoogleCalendarService {
 		public List<GoogleCalendar.Reminder> defaultReminders { get; set;}
 		public String nextPageToken { get; set;}
 		public List<GoogleCalendarEvent> items { get; set;}
+	}
+	
+	public class ListAclResponse {
+		public String kind { get; set;}
+		public String etag { get; set;}
+		public String nextPageToken { get; set;}
+		public List<GoogleCalendarAcl> items { get; set;}
 	}
 }
