@@ -22,38 +22,18 @@ public class GoogleCalendarService {
 		return service.authenticate(jwt);
 	}
 	
-	public CalendarListResponse listCalendarList() {
+	public ListCalendarListResponse listCalendarList() {
 		return listCalendarList(null);
 	}	
 	
-	public CalendarListResponse listCalendarList(CalendarListOption option) {
+	public ListCalendarListResponse listCalendarList(ListCalendarListOption option) {
 		String url = CALENDAR_URL + '/users/me/calendarList';
 		if (option != null) {
-			boolean first = true;
-			if (option.maxResult > 0) {
-				url += (first ? '?' : '&');
-				url += 'maxResult=' + option.maxResult;
-				first = false;
-			}
-			if (option.minAccessRole != null) {
-				url += (first ? '?' : '&');
-				url += 'minAccessRole=' + option.minAccessRole;
-				first = false;
-			}
-			if (option.nextPageToken != null) {
-				url += (first ? '?' : '&');
-				url += 'nextPageToken=' + option.nextPageToken;
-				first = false;
-			}
-			if (option.showHidden) {
-				url += (first ? '?' : '&');
-				url += 'showHidden=true';
-				first = false;
-			}
+			url += option.toQuery();
 		}
 		String str = service.get(url);
 		System.debug('listCalendarList: ' + str);
-		return ((CalendarListResponse)JSON.deserializeStrict(str, CalendarListResponse.class)); 
+		return ((ListCalendarListResponse)JSON.deserializeStrict(str, ListCalendarListResponse.class)); 
 	}
 
 	public GoogleCalendarList getCalendarList(String id) {
@@ -90,36 +70,100 @@ public class GoogleCalendarService {
 		return (GoogleCalendar)JSON.deserializeStrict(str, GoogleCalendar.class); 
 	}
 	
+	public GoogleCalendar patchCalendar(String calendarId, GoogleCalendar cal) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(calendarId, 'utf-8');
+		String str = service.patch(url, cal.toString());
+		System.debug('updateCalendar: ' + str);
+		return (GoogleCalendar)JSON.deserializeStrict(str, GoogleCalendar.class); 
+	}
+	
+	public void clearCalendar(String id) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(id, 'utf-8') + '/clear';
+		service.post(url, '');
+	}
+	
 	public void deleteCalendar(String id) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(id, 'utf-8');
 		service.doDelete(url);
 	}
 	
-	public EventListResponse listEvent(GoogleCalendar cal) {
-		EventListOption option = new EventListOption();
+	public ListEventResponse listEvent(GoogleCalendar cal) {
+		ListEventOption option = new ListEventOption();
 		option.timeMin = Datetime.now().addYears(-1);
 		return listEvent(cal, option);
 	}
 	
-	public EventListResponse listEvent(GoogleCalendar cal, EventListOption option) {
+	public ListEventResponse listEvent(GoogleCalendar cal, ListEventOption option) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events' + option.toQuery();
 		String str = service.get(url);
-		str = GoogleCalendarEvent.replaceJson(str);
 		System.debug('listEvent: ' + str);
-		return (EventListResponse)JSON.deserializeStrict(str, EventListResponse.class); 
+		str = GoogleCalendarEvent.replaceProperties(str);
+		return (ListEventResponse)JSON.deserializeStrict(str, ListEventResponse.class); 
 	}
 	
 	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent event) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events';
 		String str = service.post(url, event.toString());
-		str = GoogleCalendarEvent.replaceJson(str);
 		System.debug('insertEvent: ' + str);
+		str = GoogleCalendarEvent.replaceProperties(str);
 		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
 	}
-
-	public class CalendarListOption {
+	
+	public GoogleCalendarEvent quickAddEvent(GoogleCalendar cal, String text) {
+		return quickAddEvent(cal, text, false);
+	}
+	
+	public GoogleCalendarEvent quickAddEvent(GoogleCalendar cal, String text, boolean sendNotifications) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/quickAdd' +
+			'?text=' + EncodingUtil.urlEncode(text, 'utf-8');
+		if (sendNotifications) {
+			url += '&sendNotifications=true';
+		}
+		String str = service.post(url, '');
+		System.debug('quickAddEvent: ' + str);
+		str = GoogleCalendarEvent.replaceProperties(str);
+		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
+	}
+	
+	public GoogleCalendarEvent getEvent(GoogleCalendar cal, String eventId) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(eventId, 'utf-8');
+		String str = service.get(url);
+		System.debug('getEvent: ' + str);
+		str = GoogleCalendarEvent.replaceProperties(str);
+		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
+	}
+	
+	public GoogleCalendarEvent updateEvent(GoogleCalendar cal, GoogleCalendarEvent event) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(event.id, 'utf-8');
+		String str = service.put(url, event.toString());
+		System.debug('updateEvent: ' + str);
+		str = GoogleCalendarEvent.replaceProperties(str);
+		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
+	}
+	
+	public GoogleCalendarEvent patchEvent(GoogleCalendar cal, String eventId, GoogleCalendarEvent event) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(eventId, 'utf-8');
+		String str = service.patch(url, event.toString());
+		System.debug('patchEvent: ' + str);
+		str = GoogleCalendarEvent.replaceProperties(str);
+		return (GoogleCalendarEvent)JSON.deserializeStrict(str, GoogleCalendarEvent.class); 
+	}
+	
+	public void deleteEvent(GoogleCalendar cal, String eventId) {
+		deleteEvent(cal, eventId, false);
+	}
+	
+	public void deleteEvent(GoogleCalendar cal, String eventId, boolean sendNotifications) {
+		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(eventId, 'utf-8');
+		if (sendNotifications) {
+			url += '?sendNotifications=true';
+		}
+		service.doDelete(url);
+	}
+	
+	public class ListCalendarListOption {
 		
-		public CalendarListOption() {
+		public ListCalendarListOption() {
 			this.maxResult = 0;
 			this.showHidden = false;
 		}
@@ -128,18 +172,39 @@ public class GoogleCalendarService {
 		public String minAccessRole { get; set;}
 		public String nextPageToken { get; set;}
 		public Boolean showHidden { get; set;}
+		
+		public String toQuery() {
+			String ret = '';
+			if (maxResult > 0) {
+				ret += '&maxResult=' + maxResult;
+			}
+			if (minAccessRole != null) {
+				ret += '&minAccessRole=' + EncodingUtil.urlEncode(minAccessRole, 'utf-8');
+			}
+			if (nextPageToken != null) {
+				ret += '&nextPageToken=' + EncodingUtil.urlEncode(nextPageToken, 'utf-8');
+			}
+			if (showHidden) {
+				ret += '&showHidden=true';
+			}
+			if (ret.length() > 0) {
+				ret = '?' + ret.substring(1);
+			}
+			return ret;
+			
+		}
 	}
 	
-	public class CalendarListResponse {
+	public class ListCalendarListResponse {
 		public String kind { get; set;}
 		public String etag { get; set;}
 		public String nextPageToken { get; set;}
 		public List<GoogleCalendarList> items { get; set;}
 	}
 	
-	public class EventListOption {
+	public class ListEventOption {
 		
-		public EventListOption() {
+		public ListEventOption() {
 			this.alwaysIncludeEmail = false;
 			this.maxAttendees = 0;
 			this.maxResults = 0;
@@ -225,7 +290,7 @@ public class GoogleCalendarService {
 		}
 	}
 	
-	public class EventListResponse {
+	public class ListEventResponse {
 		public String kind { get; set;}
 		public String etag { get; set;}
 		public String summary { get; set;}
@@ -237,139 +302,4 @@ public class GoogleCalendarService {
 		public String nextPageToken { get; set;}
 		public List<GoogleCalendarEvent> items { get; set;}
 	}
-	/*
-	public List<GoogleCalendar> getAllCalendars() {
-		GoogleData data = service.getFeed(CalendarService.allCalendars);
-		return buildCalendarList(data);
-	}
-	
-	public List<GoogleCalendar> getOwnCalendars() {
-		GoogleData data = service.getFeed(CalendarService.ownCalendars);
-		return buildCalendarList(data);
-	}
-	
-	public GoogleCalendar getCalendarByTitle(String title) {
-		List<GoogleCalendar> ret = getAllCalendars();
-		for (GoogleCalendar cal : ret) {
-			if (cal.title.startsWith(title)) {
-				return cal;
-			}
-		}
-		return null;
-	} 
-	
-	public List<GoogleCalendarEvent> getEvents(GoogleCalendar cal, Datetime min, Datetime max) {
-		GoogleData data = service.getFeed(cal.alternate +
-			'?start-min=' + GoogleData.dateTimeToString(min) +
-			'&start-max=' + GoogleData.dateTimeToString(max) +
-			'&orderby=starttime&singleEvents=true');
-		return buildEventList(data);
-	}
-	
-	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent evt) {
-        return insertEvent(cal, new List<GoogleCalendarEvent>{evt}).get(0);
-	}
-	
-	public List<GoogleCalendarEvent> insertEvent(GoogleCalendar cal, List<GoogleCalendarEvent> evtList) {
-		xmldom.element feed = new xmldom.element('feed'); 
-		feed.attributes.put( 'xmlns','http://www.w3.org/2005/Atom');
-		feed.attributes.put( 'xmlns:batch','http://schemas.google.com/gdata/batch');
-		feed.attributes.put( 'xmlns:gCal','http://schemas.google.com/gCal/2005');
-		feed.attributes.put( 'xmlns:gd','http://schemas.google.com/g/2005');
-		xmldom.element cat =  new xmldom.element('category');
-		cat.attributes.put( 'scheme','http://schemas.google.com/g/2005#kind');
-		cat.attributes.put( 'term','http://schemas.google.com/g/2005#event');
-		feed.appendChild(cat);
-
-		// build an entry for each event in the list
-		integer batchid = 1;
-		for (GoogleCalendarEvent e: evtList) {
-			xmldom.element entry =new xmldom.element('entry'); 
-			entry.appendChild( Googledata.createTextNode ( 'title', e.title) );
-			entry.appendChild( Googledata.createTextNode ( 'content', e.content));
-			// TODO support for recurring events
-			
-			// construct where
-			if (e.place != null) {
-				xmldom.element ewhere = new xmldom.element('gd:where');
-				ewhere.attributes.put('valueString', e.place);
-				entry.appendChild(ewhere);
-			}
-			// construct start and end times
-			xmldom.element ewhen = new xmldom.element('gd:when');
-			ewhen.attributes.put('startTime',GoogleData.dateTimeToString(e.startTime));
-			ewhen.attributes.put('endTime',GoogleData.dateTimeToString(e.endtime));
-			entry.appendChild(ewhen); 
-			
-			// add batch info to the element 
-			xmldom.element bid = GoogleData.makeElement( 'batch:id',string.valueof( batchid ) );
-			entry.appendchild( bid ); 
-			xmldom.element bop =  new xmldom.element('batch:operation');
-			bop.attributes.put('type','insert');
-			entry.appendChild( bop );
-					
-			batchid++; // increment the batch counter
-			
-			feed.appendChild( entry ); 
-		}
-		
-		// take the entries list, wrap in a feed
-		string body = feed.toXmlString(); 
-		service.makePostRequest( cal.alternate + '/batch', body );
-		
-		//ToDo
-		//return service.responseXml.root; 
-		service.responseXml.root.dumpAll();
-		return evtList;
-	}
-	
-	public void removeEvent(GoogleCalendarEvent evt) {
-		remove(evt.element);
-	}
-	
-	public void updateEvent(GoogleCalendarEvent evt) {
-		if (evt.element == null) {
-			throw new GoogleCalendarException('ERROR missing edit url');
-		}
-		string editUrl  = GoogleData.getRelLink(evt.element,'edit');
-		if ( editUrl == null ) { 
-			throw new GoogleCalendarException('ERROR missing edit url');
-		}
-		xmldom.element node = evt.element.getElementByTagName('entry');
-		GoogleData.addNameSpace(node); 
-		GoogleData.addAPINameSpace(node, 'xmlns:gCal','http://schemas.google.com/gCal/2005');
-		string body = evt.element.toXmlString();
-		system.debug( body); 
-		 
-		service.makePutRequest( editUrl, body);
-		service.responseXml.root.dumpAll();
-	}
-	
-	private List<GoogleCalendar> buildCalendarList(GoogleData data) {
-		List<GoogleCalendar> ret = new List<GoogleCalendar>();
-		for (xmldom.element el: data.entries) {
-			ret.add(new GoogleCalendar(el));
-		}
-		return ret;
-	}
-	
-	private List<GoogleCalendarEvent> buildEventList(GoogleData data) {
-		List<GoogleCalendarEvent> ret = new List<GoogleCalendarEvent>();
-		for (xmldom.element el: data.entries) {
-			ret.add(new GoogleCalendarEvent(el));
-		}
-		return ret;
-	}
-	
-	private void remove(xmldom.element el) {
-		if (el == null) {
-			throw new GoogleCalendarException('ERROR missing edit url');
-		}
-		string editUrl  = GoogleData.getRelLink(el, 'edit');
-		if ( editUrl == null ) { 
-			throw new GoogleCalendarException('ERROR missing edit url');
-		}
-		service.makeDeleteRequest( editUrl );
-	}
-	*/
 }

@@ -88,6 +88,20 @@ public class GoogleServiceV3 {
 		throw buildResponseException(res);
 	}
 	
+	public String patch(String url, String jsonStr) {
+		HttpRequest req = createRequest();
+		req.setEndpoint(url);
+		req.setMethod('POST');
+		req.setHeader('X-HTTP-Method-Override', 'PATCH');
+		req.setHeader('Content-Type','application/json');
+		req.setBody(jsonStr);
+		HttpResponse res = sendRequest(req);
+		if (isOK(res)) {
+			return res.getBody();
+		}
+		throw buildResponseException(res);
+	}
+	
 	public String put(String url, String jsonStr) {
 		HttpRequest req = createRequest();
 		req.setEndpoint(url);
@@ -151,4 +165,5 @@ public class GoogleServiceV3 {
 		public String token_type;
 		public Integer expire_in;
 	}
+	
 }

@@ -1,4 +1,4 @@
-public virtual class GoogleUser {
+public virtual class GoogleUser extends AbstractJsonObject {
 	
 	public String id { get;}
 	public String email { get;}

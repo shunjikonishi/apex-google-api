@@ -17,8 +17,16 @@ https://developers.google.com/google-apps/calendar/v3/reference/
     - get
     - insert
     - update
+    - patch
+    - clear
 - Events
+    - delete
+    - get
     - list
+    - insert
+    - patch
+    - update
+    - quickAdd
 
 ### Not implemented
 
@@ -28,20 +36,11 @@ https://developers.google.com/google-apps/calendar/v3/reference/
     - insert
     - patch
     - update
-- Calendars
-    - clear
-    - patch
 - Colors
 - Events
-    - delete
-    - get
     - import
-    - insert
     - instances
     - move
-    - patch
-    - quickAdd
-    - update
     - watch
 - Freebusy
 - Settings

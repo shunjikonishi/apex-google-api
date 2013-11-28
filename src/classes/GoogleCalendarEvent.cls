@@ -1,4 +1,4 @@
-public class GoogleCalendarEvent {
+public class GoogleCalendarEvent extends AbstractJsonObject {
 
 	private static final Time TIME_ZERO = Time.newInstance(0, 0, 0, 0);
 		
@@ -97,7 +97,7 @@ public class GoogleCalendarEvent {
 	}
 	
 	public override String toString() {
-		String ret = JSON.serialize(this);
+		String ret = super.toString();
 		ret = ret.replaceAll('"start_xx":', '"start":');
 		ret = ret.replaceAll('"end_xx":', '"end":');
 		ret = ret.replaceAll('"date_xx":', '"date":');
@@ -109,13 +109,13 @@ public class GoogleCalendarEvent {
 		return ret;
 	}
 	
-	public static String replaceJson(String ret) {
-		ret = ret.replaceAll('"start":', '"start_xx":');
-		ret = ret.replaceAll('"end":', '"end_xx":');
-		ret = ret.replaceAll('"date":', '"date_xx":');
-		ret = ret.replaceAll('"dateTime":', '"dateTime_xx":');
-		ret = ret.replaceAll('"private":', '"private_xx":');
-		return ret;
+	public static String replaceProperties(String str) {
+		str = str.replaceAll('"start":', '"start_xx":');
+		str = str.replaceAll('"end":', '"end_xx":');
+		str = str.replaceAll('"date":', '"date_xx":');
+		str = str.replaceAll('"dateTime":', '"dateTime_xx":');
+		str = str.replaceAll('"private":', '"private_xx":');
+		return str;
 	}
 	
 	private String removeField(String str, String fieldName) {

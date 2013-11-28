@@ -1,4 +1,4 @@
-public virtual class GoogleCalendar {
+public virtual class GoogleCalendar extends AbstractJsonObject {
 
 	public String kind { get;}
 	public String etag { get;}
@@ -13,7 +13,4 @@ public virtual class GoogleCalendar {
 		public Integer minutes { get; set;}
 	}
 	
-	public override String toString() {
-		return JSON.serialize(this);
-	} 	
 }
