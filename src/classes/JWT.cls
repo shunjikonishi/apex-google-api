@@ -15,6 +15,11 @@ public class JWT {
 		set { this.claimSet.iss = value;}
 	}
 	
+	public String prn {
+		get { return this.claimSet.prn;}
+		set { this.claimSet.prn = value;}
+	}
+	
 	public String scope {
 		get { return this.claimSet.scope;}
 		set { this.claimSet.scope = value;}
@@ -72,20 +77,33 @@ public class JWT {
 	private class ClaimSet {
 		
 		public String iss;
+		public String prn;
 		public String scope;
 		public String aud;
 		public Long exp;
 		public Long iat;
 		
 		public override String toString() {
-		    String format = '"iss":"{0}","scope":"{1}","aud":"{2}","exp": {3},"iat": {4}';
-			List<String> input = new List<String>();
-			input.add(iss);
-			input.add(scope);
-			input.add(aud);
-			input.add(String.valueOf(exp));
-			input.add(String.valueOf(iat));
-			return '{' + String.format(format, input) + '}';
+			if (prn == null) {
+			    String format = '"iss":"{0}","scope":"{1}","aud":"{2}","exp": {3},"iat": {4}';
+				List<String> input = new List<String>();
+				input.add(iss);
+				input.add(scope);
+				input.add(aud);
+				input.add(String.valueOf(exp));
+				input.add(String.valueOf(iat));
+				return '{' + String.format(format, input) + '}';
+			} else {
+			    String format = '"iss":"{0}","prn":"{1}","scope":"{2}","aud":"{3}","exp": {4},"iat": {5}';
+				List<String> input = new List<String>();
+				input.add(iss);
+				input.add(prn);
+				input.add(scope);
+				input.add(aud);
+				input.add(String.valueOf(exp));
+				input.add(String.valueOf(iat));
+				return '{' + String.format(format, input) + '}';
+			}
 		}
 	}
 	
