@@ -17,8 +17,8 @@ public class GoogleCalendarEvent extends AbstractJsonObject {
 	public GoogleCalendarEvent(String title, Datetime start, Datetime ed) {
 		this();
 		this.summary = title;
-		this.start_xx.datetime_xx = start;
-		this.end_xx.datetime_xx = ed;
+		this.start_xx.dateTime_xx = start;
+		this.end_xx.dateTime_xx = ed;
 	}
 	
 	public String kind { get;}
@@ -58,42 +58,77 @@ public class GoogleCalendarEvent extends AbstractJsonObject {
 	public EventReminders reminders { get; set;}
 	public EventSource source { get; set;}
 	
-	public Datetime startDate {
-		get {
-			if (this.start_xx.datetime_xx != null) {
-				return this.start_xx.datetime_xx;
-			} else if (this.start_xx.date_xx != null) {
-				return Datetime.newInstance(this.start_xx.date_xx, TIME_ZERO);
-			} else {
-				return null;
-			}
-		}
-		set {
-			if (value.hour() == 0 && value.minute() == 0 && value.second() == 0 && value.millisecond() == 0) {
-				this.start_xx.date_xx = value.date();
-			} else {
-				this.start_xx.datetime_xx = value;
-			}
+	////////////////////////////////////////////////////
+	// Start and end datetime 
+	////////////////////////////////////////////////////
+	public Datetime getStartDatetime() {
+		if (this.start_xx.dateTime_xx != null) {
+			return this.start_xx.dateTime_xx;
+		} else if (this.start_xx.date_xx != null) {
+			return Datetime.newInstance(this.start_xx.date_xx, TIME_ZERO);
+		} else {
+			return null;
 		}
 	}
 	
-	public Datetime endDate {
-		get {
-			if (this.end_xx.datetime_xx != null) {
-				return this.end_xx.datetime_xx;
-			} else if (this.end_xx.date_xx != null) {
-				return Datetime.newInstance(this.end_xx.date_xx, TIME_ZERO);
-			} else {
-				return null;
-			}
+	public void setStartDate(Date value) {
+		this.start_xx.date_xx = value;
+		this.start_xx.dateTime_xx = null;
+	}
+	
+	public void setStartDatetime(Datetime value) {
+		this.start_xx.date_xx = null;
+		this.start_xx.dateTime_xx = value;
+	}
+	
+	public Datetime getEndDatetime() {
+		if (this.end_xx.dateTime_xx != null) {
+			return this.end_xx.dateTime_xx;
+		} else if (this.end_xx.date_xx != null) {
+			return Datetime.newInstance(this.end_xx.date_xx, TIME_ZERO);
+		} else {
+			return null;
 		}
-		set {
-			if (value.hour() == 0 && value.minute() == 0 && value.second() == 0 && value.millisecond() == 0) {
-				this.end_xx.date_xx = value.date();
-			} else {
-				this.end_xx.datetime_xx = value;
-			}
+	}
+	
+	public void setEndDate(Date value) {
+		this.end_xx.date_xx = value;
+		this.end_xx.dateTime_xx = null;
+	}
+	
+	public void setEndDatetime(Datetime value) {
+		this.end_xx.date_xx = null;
+		this.end_xx.dateTime_xx = value;
+	}
+	
+	public void setAllday(Date value) {
+		this.start_xx.date_xx = value;
+		this.end_xx.date_xx = value.addDays(1);
+		this.start_xx.dateTime_xx = null;
+		this.end_xx.dateTime_xx = null;
+	}
+	
+	public void setDateAndDuration(Datetime startTime, Integer minutes) {
+		this.start_xx.date_xx = null;
+		this.end_xx.date_xx = null;
+		this.start_xx.dateTime_xx = startTime;
+		this.end_xx.dateTime_xx = startTime.addMinutes(minutes);
+	}
+	
+	////////////////////////////////////////////////////
+	// Attendees
+	////////////////////////////////////////////////////
+	public void addAttendee(String email) {
+		Attendee a = new Attendee();
+		a.email = email;
+		addAttendee(a);
+	}
+	
+	public void addAttendee(Attendee a) {
+		if (this.attendees == null) {
+			this.attendees = new List<Attendee>();
 		}
+		this.attendees.add(a);
 	}
 	
 	public override String toString() {
@@ -103,9 +138,6 @@ public class GoogleCalendarEvent extends AbstractJsonObject {
 		ret = ret.replaceAll('"date_xx":', '"date":');
 		ret = ret.replaceAll('"dateTime_xx":', '"dateTime":');
 		ret = ret.replaceAll('"private_xx":', '"private":');
-		ret = removeField(ret, 'startDate');
-		ret = removeField(ret, 'endDate');
-		ret = removeNull(ret);
 		return ret;
 	}
 	
@@ -116,22 +148,6 @@ public class GoogleCalendarEvent extends AbstractJsonObject {
 		str = str.replaceAll('"dateTime":', '"dateTime_xx":');
 		str = str.replaceAll('"private":', '"private_xx":');
 		return str;
-	}
-	
-	private String removeField(String str, String fieldName) {
-		Integer n = str.indexOf('"' + fieldName + '"');
-		if (n == -1) {
-			return str;
-		}
-		Integer n2 = str.indexOf(',', n);
-		if (n2 == -1) {
-			return str;
-		}
-		return str.substring(0, n) + str.substring(n2+1);
-	}
-	
-	private String removeNull(String ret) {
-		return ret;
 	}
 	
 	public class ExtendedProperties {
