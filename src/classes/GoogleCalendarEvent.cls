@@ -118,17 +118,18 @@ public class GoogleCalendarEvent extends AbstractJsonObject {
 	////////////////////////////////////////////////////
 	// Attendees
 	////////////////////////////////////////////////////
-	public void addAttendee(String email) {
+	public Attendee addAttendee(String email) {
 		Attendee a = new Attendee();
 		a.email = email;
-		addAttendee(a);
+		return addAttendee(a);
 	}
 	
-	public void addAttendee(Attendee a) {
+	public Attendee addAttendee(Attendee a) {
 		if (this.attendees == null) {
 			this.attendees = new List<Attendee>();
 		}
 		this.attendees.add(a);
+		return a;
 	}
 	
 	public override String toString() {

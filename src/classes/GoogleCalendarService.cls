@@ -115,7 +115,20 @@ public class GoogleCalendarService {
 	}
 	
 	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent event) {
+		return insertEvent(cal, event, new ModifyEventOption());
+	}
+	
+	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent event, Boolean sendNotifications) {
+		ModifyEventOption option = new ModifyEventOption();
+		option.sendNotifications = sendNotifications;
+		return insertEvent(cal, event, option);
+	}
+	
+	public GoogleCalendarEvent insertEvent(GoogleCalendar cal, GoogleCalendarEvent event, ModifyEventOption option) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events';
+		if (option != null) {
+			url += option.toQuery();
+		}
 		String str = service.post(url, event.toString());
 		System.debug('insertEvent: ' + str);
 		str = GoogleCalendarEvent.replaceProperties(str);
@@ -147,7 +160,20 @@ public class GoogleCalendarService {
 	}
 	
 	public GoogleCalendarEvent updateEvent(GoogleCalendar cal, GoogleCalendarEvent event) {
+		return updateEvent(cal, event, new ModifyEventOption());
+	}
+	
+	public GoogleCalendarEvent updateEvent(GoogleCalendar cal, GoogleCalendarEvent event, Boolean sendNotifications) {
+		ModifyEventOption option = new ModifyEventOption();
+		option.sendNotifications = sendNotifications;
+		return updateEvent(cal, event, option);
+	}
+		
+	public GoogleCalendarEvent updateEvent(GoogleCalendar cal, GoogleCalendarEvent event, ModifyEventOption option) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(event.id, 'utf-8');
+		if (option != null) {
+			url += option.toQuery();
+		}
 		String str = service.put(url, event.toString());
 		System.debug('updateEvent: ' + str);
 		str = GoogleCalendarEvent.replaceProperties(str);
@@ -155,7 +181,20 @@ public class GoogleCalendarService {
 	}
 	
 	public GoogleCalendarEvent patchEvent(GoogleCalendar cal, String eventId, GoogleCalendarEvent event) {
+		return patchEvent(cal, eventId, event, new ModifyEventOption());
+	}
+	
+	public GoogleCalendarEvent patchEvent(GoogleCalendar cal, String eventId, GoogleCalendarEvent event, Boolean sendNotifications) {
+		ModifyEventOption option = new ModifyEventOption();
+		option.sendNotifications = sendNotifications;
+		return patchEvent(cal, eventId, event, option);
+	}
+		
+	public GoogleCalendarEvent patchEvent(GoogleCalendar cal, String eventId, GoogleCalendarEvent event, ModifyEventOption option) {
 		String url = CALENDAR_URL + '/calendars/' + EncodingUtil.urlEncode(cal.id, 'utf-8') + '/events/' + EncodingUtil.urlEncode(eventId, 'utf-8');
+		if (option != null) {
+			url += option.toQuery();
+		}
 		String str = service.patch(url, event.toString());
 		System.debug('patchEvent: ' + str);
 		str = GoogleCalendarEvent.replaceProperties(str);
@@ -367,5 +406,35 @@ public class GoogleCalendarService {
 		public String etag { get; set;}
 		public String nextPageToken { get; set;}
 		public List<GoogleCalendarAcl> items { get; set;}
+	}
+	
+	public class ModifyEventOption {
+		
+		public ModifyEventOption() {
+			this.alwaysIncludeEmail = false;
+			this.maxAttendees = 0;
+			this.sendNotifications = false;
+		}
+		
+		public Boolean alwaysIncludeEmail { get; set;}
+		public Integer maxAttendees { get; set;}
+		public Boolean sendNotifications { get; set;}
+		
+		public String toQuery() {
+			String ret = '';
+			if (alwaysIncludeEmail) {
+				ret += '&alwaysIncludeEmail=true';
+			}
+			if (maxAttendees > 0) {
+				ret += '&maxAttendees=' + maxAttendees;
+			}
+			if (sendNotifications) {
+				ret += '&sendNotifications=true';
+			}
+			if (ret.length() > 0) {
+				ret = '?' + ret.substring(1);
+			}
+			return ret;
+		}
 	}
 }
