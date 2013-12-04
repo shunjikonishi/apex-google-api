@@ -8,6 +8,7 @@
         <members>GoogleCalendarList</members>
         <members>GoogleCalendarService</members>
         <members>GoogleCalendarTest</members>
+        <members>GoogleOAuth</members>
         <members>GoogleServiceException</members>
         <members>GoogleServiceV3</members>
         <members>GoogleUser</members>

@@ -6,7 +6,8 @@ public class GoogleServiceV3 {
 	
 	private SignServer signServer;
 	
-	private AuthResponse auth = null;
+	private String token_type;
+	private String access_token;
 	
 	public GoogleServiceV3() {
 	}
@@ -42,16 +43,17 @@ public class GoogleServiceV3 {
 		
 		HttpResponse res = sendRequest(req);
 		if (isOK(res)) {
-			this.auth = (AuthResponse)JSON.deserialize(res.getBody(), AuthResponse.class);
+			GoogleOAuth.AuthResponse auth = (GoogleOAuth.AuthResponse)JSON.deserialize(res.getBody(), GoogleOAuth.AuthResponse.class);
+			this.token_type = auth.token_type;
+			this.access_token = auth.access_token;
 			return  true;
 		}
 		throw buildResponseException(res);
 	}
 	
 	public void setAccessToken(String tokenType, String token) {
-		this.auth = new AuthResponse();
-		this.auth.token_type = tokenType;
-		this.auth.access_token = token;
+		this.token_type = tokenType;
+		this.access_token = token;
 	}
 	
 	public String get(String url) {
@@ -135,8 +137,8 @@ public class GoogleServiceV3 {
 	private HttpRequest createRequest() {
 		HttpRequest req = new HttpRequest();
 		req.setHeader('User-Agent','apex-google-api');
-		if(this.auth != null) {
-			String str = this.auth.token_type + ' ' + this.auth.access_token;
+		if(this.access_token != null && this.token_type != null) {
+			String str = this.token_type + ' ' + this.access_token;
 			req.setHeader('Authorization', str);
 		}
 		return req;
@@ -160,12 +162,6 @@ public class GoogleServiceV3 {
 			'\nBODY: ' + res.getBody();
 		System.debug(msg);
 		return new GoogleServiceException(msg);
-	}
-	
-	private class AuthResponse {
-		public String access_token;
-		public String token_type;
-		public Integer expire_in;
 	}
 	
 }

@@ -4,16 +4,31 @@ This project is an api wrapper for Google API V3.
 Currently it contains only Calendar API.
 
 ## Authentication
-Currently it supports only Service Accounts authorization.
+It supports OAuth2.0 Server Flow and Service Accounts authorization.
 
+- https://developers.google.com/accounts/docs/OAuth2WebServer
 - https://developers.google.com/accounts/docs/OAuth2ServiceAccount
 
-But unfortunately, now Apex can not sign with SHA256withRSA.  
-So I developed a sign server for sign.
+Unfortunately, now Apex can not sign with SHA256withRSA.  
+So if you want to use Service Accounts authorization, you must prepare a sign server.
 
 - https://github.com/shunjikonishi/sign-server
 
-### Sample code
+### Sample code - Server Flow authrization.
+    GoogleOAuth oauth = new GoogleOAuth(
+        'YOUR_CLIENT_ID.apps.googleusercontent.com',
+        'YOUR_CLIENT_SECRET',
+        GoogleCalendarService.SCOPE_READWRITE,//scope
+        'https://c.na14.visual.force.com/apex/YOUR_REDIRECT_URI'
+    );
+    String loginUrl = oauth.getLoginUrl();
+    //ToDo Open loginUrl and get authorization code.
+    GoogleOAuth.AuthResponse auth = oauth.authenticate(code);
+    
+    service = new GoogleCalendarService();
+    service.setAccessToken(auth.token_type, auth.access_token);
+
+### Sample code - Service Accounts authrization.
     SignServer sign = new SignServer('https://YOUR-APPNAME.herokuapp.com/sign');
     service = new GoogleCalendarService(sign);
     JWT jwt = new JWT('YOUR-APPACOUNT@developer.gserviceaccount.com');
